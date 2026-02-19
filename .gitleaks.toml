@@ -14,6 +14,7 @@ regex = '''(?:^|[\\'"\x60\s>=:(,)])([a-zA-Z0-9_~.]{3}\dQ~[a-zA-Z0-9_~.-]{31,34})
 entropy = 3
 keywords = ["q~"]
 
+[[rules]]
 id = "generic-api-key"
 description = "Detected a Generic API Key, potentially exposing access to various services and sensitive operations."
 regex = '''(?i)[\w.-]{0,50}?(?:access|auth|(?-i:[Aa]pi|API)|credential|creds|key|passw(?:or)?d|secret|token)(?:[ \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([\w.=-]{10,150}|[a-z0-9][a-z0-9+/]{11,}={0,3})(?:[\x60'"\s;]|\\[nr]|$)'''
@@ -31,18 +32,21 @@ keywords = [
     "token",
 ]
 
+[[rules]]
 id = "github-fine-grained-pat"
 description = "Found a GitHub Fine-Grained Personal Access Token, risking unauthorized repository access and code manipulation."
 regex = '''github_pat_\w{82}'''
 entropy = 3
 keywords = ["github_pat_"]
 
+[[rules]]
 id = "github-oauth"
 description = "Discovered a GitHub OAuth Access Token, posing a risk of compromised GitHub account integrations and data leaks."
 regex = '''gho_[0-9a-zA-Z]{36}'''
 entropy = 3
 keywords = ["gho_"]
 
+[[rules]]
 id = "github-pat"
 description = "Uncovered a GitHub Personal Access Token, potentially leading to unauthorized repository access and sensitive content exposure."
 regex = '''ghp_[0-9a-zA-Z]{36}'''
