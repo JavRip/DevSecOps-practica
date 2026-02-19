@@ -1,0 +1,25 @@
+name: gitleaks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_STOP_ON_ERROR: "true"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "true"      # Subir reporte como artifact
+          GITLEAKS_REPORT_FORMAT: "json"               # Formato JSON
+          GITLEAKS_ENABLE_SUMMARY: "true"              # Mostrar resumen en logs
+          GITLEAKS_CONFIG: ".gitleaks.toml"            # Especificar config
