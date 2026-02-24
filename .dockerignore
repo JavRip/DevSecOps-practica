@@ -1,0 +1,6 @@
+# Dockerfile no es necesario en el contenedor
+Dockerfile
+
+# Ignorar archivos de Git
+.git/
+.gitignore
