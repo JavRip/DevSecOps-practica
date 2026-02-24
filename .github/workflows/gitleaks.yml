@@ -1,40 +1,80 @@
-name: gitleaks
+name: DevSecOps Pipeline - Build, Scan & Deploy
+
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  scan:
-    name: gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_STOP_ON_ERROR: "true"
-          GITLEAKS_CONFIG: ".gitleaks.toml"
-  trivy:
-    name: trivy-scan
+  gitleaks:
+    name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          redact: true
+          exit-code: 1
+          
+  trivy:
+    name: Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         
       - name: Build Docker image
-        run: docker build -t mi-app .
+        run: docker build -t mi-app:${{ github.sha }} .
         
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'mi-app:latest'
-          format: 'json'
-          output: 'trivy-results.json'
+          image-ref: 'mi-app:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+          
+  deploy-azure:
+    name: Deploy to Azure
+    needs: [gitleaks, trivy]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Build and push Docker image to ACR
+        run: |
+          az acr login --name mi-contenedor-registry
+          docker build -t mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }} .
+          docker push mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }}
+          
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: mi-app-azure-devsecops
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          images: 'mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }}'
+          
+      - name: Configure Azure Key Vault access
+        run: |
+          az webapp config appsettings set \
+            --resource-group KeyVault \
+            --name mi-app-azure-devsecops \
+            --settings \
+              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
+              AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" \
+              AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" \
+              KEY_VAULT_NAME="kv-devsecops-1" \
+              SECRET_NAME="API-Key"

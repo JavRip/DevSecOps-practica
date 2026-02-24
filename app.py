@@ -1,12 +1,31 @@
 from flask import Flask
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 # Crear la aplicación Flask
 app = Flask(__name__)
 
-# Endpoint principal - responde a peticiones GET a /
+# Configuración del Key Vault
+KEY_VAULT_NAME = "kv-devsecops1" 
+KEY_VAULT_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net/"
+SECRET_NAME = "API-Key"
+
 @app.route('/')
 def home():
-    return "¡Hola! Esta es mi aplicación Docker segura para la práctica de DevSecOps."
+    try:
+        credential = DefaultAzureCredential()
+        
+        # Crear cliente de Key Vault
+        client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
+        
+        # Obtener el secreto
+        secret = client.get_secret(SECRET_NAME)
+        secret_value = secret.value
+        
+        return f"¡Hola! App segura con Azure Key Vault. Secret obtenido: {secret_value[:10]}..."
+    
+    except Exception as e:
+        return f"Error al acceder al Key Vault: {str(e)}"
 
 # Punto de entrada para ejecutar la aplicación
 if __name__ == '__main__':
