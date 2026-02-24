@@ -4,3 +4,7 @@ Dockerfile
 # Ignorar archivos de Git
 .git/
 .gitignore
+
+# Entornos virtuales de Python
+venv/
+.env
