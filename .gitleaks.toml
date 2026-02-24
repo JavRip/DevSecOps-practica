@@ -63,3 +63,10 @@ description = "Detected a GitHub Refresh Token, which could allow prolonged unau
 regex = '''ghr_[0-9a-zA-Z]{36}'''
 entropy = 3
 keywords = ["ghr_"]
+
+[[rules]]
+id = "azure-key-vault-secret"
+description = "Azure Key Vault Secret"
+regex = '''https://[a-zA-Z0-9-]{3,24}\.vault\.azure\.net/secrets/[a-zA-Z0-9-]{3,64}/[a-zA-Z0-9+/=]{86}'''
+entropy = 4
+keywords = ["vault.azure.net"]
