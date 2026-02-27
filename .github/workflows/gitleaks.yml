@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline - Build, Scan & Deploy
+name: Gitleaks and Trivy CI/CD Pipeline with Azure Deployment
 
 on:
   push:
