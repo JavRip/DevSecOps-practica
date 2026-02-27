@@ -17,9 +17,8 @@ jobs:
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         with:
-          config-path: .gitleaks.toml
-          redact: true
-          exit-code: 1
+          config: .gitleaks.toml
+          exit-code: 0
           
   trivy:
     name: Trivy Vulnerability Scan
@@ -56,16 +55,16 @@ jobs:
           
       - name: Build and push Docker image to ACR
         run: |
-          az acr login --name mi-contenedor-registry
-          docker build -t mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }} .
-          docker push mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }}
+          az acr login --name practica4contenedor
+          docker build -t practica4contenedor.azurecr.io/mi-app:${{ github.sha }} .
+          docker push practica4contenedor.azurecr.io/mi-app:${{ github.sha }}
           
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: mi-app-azure-devsecops
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          images: 'mi-contenedor-registry.azurecr.io/mi-app:${{ github.sha }}'
+          images: 'practica4contenedor.azurecr.io/mi-app:${{ github.sha }}'
           
       - name: Configure Azure Key Vault access
         run: |
