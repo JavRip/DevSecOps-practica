@@ -68,7 +68,7 @@ jobs:
         run: |
           az acr login --name practica4contenedor
           docker build -t practica4contenedor.azurecr.io/mi-app:${{ github.sha }} .
-          docker push practica4contenedor.azurecr.io/mi-app:${{ github.sha }}'
+          docker push practica4contenedor.azurecr.io/mi-app:${{ github.sha }}
           
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
