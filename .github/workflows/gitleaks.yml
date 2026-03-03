@@ -26,10 +26,8 @@ jobs:
         
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
-        with:
-          config-file: "gitleaks.toml"
-          exit-code: "0"
-          
+        env:
+          GITLEAKS_CONFIG: ".gitleaks.toml"
   trivy:
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
