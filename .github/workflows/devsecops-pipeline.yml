@@ -119,3 +119,4 @@ jobs:
           echo "=== DEBUG: Deteniendo contenedor ==="
           docker stop test-app
           docker rm test-app
+# Comentario para test
