@@ -77,10 +77,15 @@ jobs:
       
       - name: Test Key Vault access
         run: |
-          echo "Testing application Key Vault access..."
-          echo "Starting application in background..."
+          echo "=== DEBUG: Verificando secrets ==="
+          echo "AZURE_CLIENT_ID: '${{ secrets.AZURE_CLIENT_ID }}'"
+          echo "AZURE_TENANT_ID: '${{ secrets.AZURE_TENANT_ID }}'"
+          echo "AZURE_CLIENT_SECRET: '${{ secrets.AZURE_CLIENT_SECRET }}'"
+          echo ""
           
-          # Iniciar la aplicación en background, mapeando el puerto
+          echo "=== DEBUG: Iniciando contenedor ==="
+          echo "Testing application Key Vault access..."
+          
           docker run -d \
             --name test-app \
             -p 5000:5000 \
@@ -91,36 +96,26 @@ jobs:
             -e SECRET_NAME=API-Key \
             mi-app:${{ github.sha }}
           
-          # Esperar a que la aplicación inicie
-          echo "Waiting for application to start..."
+          echo "=== DEBUG: Contenedor iniciado, ID: $(docker ps -q --filter name=test-app) ==="
+          
           sleep 15
           
-          # Hacer una petición a la app
-          echo "Making request to application..."
+          echo "=== DEBUG: Haciendo petición ==="
           response=$(curl -s http://localhost:5000/)
           echo "Response: $response"
           
-          # Verificar si el acceso fue exitoso
-          if echo "$response" | grep -q "Key Vault"; then
-            echo "SUCCESS: Application successfully accessed Key Vault"
-            
-            # Extraer y mostrar solo los primeros caracteres del secreto
-            SECRET_PREFIX=$(echo "$response" | grep -o "Secret obtenido: [^']*" | cut -d' ' -f3- | head -c 20)
-            echo "Secret value preview: $SECRET_PREFIX..."
-            echo ""
-            echo "Test PASSED: Application can access Key Vault secrets"
+          if echo "$response" | grep -q "obtenido:"; then
+            echo "SUCCESS: Key Vault access confirmed"
+            SECRET_PREFIX=$(echo "$response" | grep -o "obtenido: [^']*" | cut -d' ' -f2- | head -c 20)
+            echo "Secret preview: $SECRET_PREFIX..."
+            echo "Test PASSED"
           else
-            echo "FAILED: Could not confirm Key Vault access"
-            if echo "$response" | grep -q "Error"; then
-              echo "Error detected in application output"
-            fi
+            echo "FAILED: $response"
+            echo "=== DEBUG: Logs del contenedor ==="
+            docker logs test-app
             exit 1
           fi
           
-          # Detener el contenedor
-          echo ""
-          echo "Stopping container..."
+          echo "=== DEBUG: Deteniendo contenedor ==="
           docker stop test-app
           docker rm test-app
-          
-          echo "Test completed successfully"
