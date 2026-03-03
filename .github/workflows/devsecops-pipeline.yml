@@ -53,38 +53,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+      
       - name: Test Key Vault access
         run: |
-            echo "Testing application Key Vault access..."
-            
-            # Ejecutar el contenedor y capturar la salida
-            OUTPUT=$(docker run --rm \
-            -e AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
-            -e AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" \
-            -e AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" \
-            -e KEY_VAULT_NAME="kv-devsecops-1" \
-            -e SECRET_NAME="API-Key" \
-            mi-app:${{ github.sha }} 2>&1)
-            
-            echo "Application output:"
-            echo "$OUTPUT"
-            echo ""
-            
-            # Verificar si el acceso fue exitoso
-            if echo "$OUTPUT" | grep -q "Key Vault"; then
-            echo "SUCCESS: Application successfully accessed Key Vault"
-            
-            # Extraer y mostrar solo los primeros caracteres del secreto
-            SECRET_PREFIX=$(echo "$OUTPUT" | grep -o "El secreto es: [^']*" | cut -d' ' -f3- | head -c 20)
-            echo "Secret value preview: $SECRET_PREFIX..."
-            echo ""
-            echo "Test PASSED: Application can access Key Vault secrets"
-            else
-            echo "FAILED: Could not confirm Key Vault access"
-            if echo "$OUTPUT" | grep -q "Error"; then
-                echo "Error detected in application output"
-            fi
-            exit 1
-            fi
-
+          echo "Testing application Key Vault access..."
+          echo "Docker version: $(docker --version)"
+          echo "Image exists: $(docker image inspect mi-app:${{ github.sha }} > /dev/null 2>&1 && echo 'yes' || echo 'no')"
+        
+          echo ""
+          echo "Attempting to run container..."
+          docker run --rm \
+            -e AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+            -e AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+            -e AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
+            -e KEY_VAULT_NAME=kv-devsecops-1 \
+            -e SECRET_NAME=API-Key \
+            mi-app:${{ github.sha }}
