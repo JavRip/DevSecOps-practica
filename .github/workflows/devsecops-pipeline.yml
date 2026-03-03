@@ -16,6 +16,18 @@ jobs:
         
       - name: Build Docker image
         run: docker build -t mi-app:${{ github.sha }} .
+        
+      - name: Save Docker image as artifact
+        run: |
+          docker save mi-app:${{ github.sha }} -o mi-app.tar
+          echo "Docker image saved successfully"
+        
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: mi-app.tar
+          retention-days: 1
 
   trivy:
     name: Trivy Vulnerability Scan
@@ -25,13 +37,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Ensure Docker image exists
-        run: |
-          if ! docker image inspect mi-app:${{ github.sha }} > /dev/null 2>&1; then
-            echo "Image not found, building..."
-            docker build -t mi-app:${{ github.sha }} .
-          fi
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
           
+      - name: Load Docker image
+        run: docker load -i mi-app.tar
+        
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -53,13 +66,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          
+      - name: Load Docker image
+        run: docker load -i mi-app.tar
       
       - name: Test Key Vault access
         run: |
           echo "Testing application Key Vault access..."
           echo "Docker version: $(docker --version)"
           echo "Image exists: $(docker image inspect mi-app:${{ github.sha }} > /dev/null 2>&1 && echo 'yes' || echo 'no')"
-        
+          
           echo ""
           echo "Attempting to run container..."
           docker run --rm \
