@@ -49,7 +49,6 @@ jobs:
           image-ref: 'mi-app:${{ github.sha }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
-        continue-on-error: true
         
   deploy-azure:
     name: Deploy to Azure
@@ -83,8 +82,8 @@ jobs:
             --resource-group KeyVault \
             --name mi-app-azure-devsecops \
             --settings \
-              "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" \
-              "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" \
-              "AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" \
-              "KEY_VAULT_NAME=kv-devsecops-1" \
-              "SECRET_NAME=API-Key"
+              AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+              AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+              AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
+              KEY_VAULT_NAME=kv-devsecops-1 \
+              SECRET_NAME=API-Key
