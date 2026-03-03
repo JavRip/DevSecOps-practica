@@ -1,33 +1,46 @@
 from flask import Flask
-from azure.identity import DefaultAzureCredential
+from azure.identity import ClientSecretCredential
 from azure.keyvault.secrets import SecretClient
+import os
 
 # Crear la aplicación Flask
 app = Flask(__name__)
 
-# Configuración del Key Vault
-KEY_VAULT_NAME = "kv-devsecops1" 
-KEY_VAULT_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net/"
-SECRET_NAME = "API-Key"
-
 @app.route('/')
 def home():
     try:
-        credential = DefaultAzureCredential()
+        # Obtener variables de entorno (seguro)
+        tenant_id = os.environ.get('AZURE_TENANT_ID')
+        client_id = os.environ.get('AZURE_CLIENT_ID') 
+        client_secret = os.environ.get('AZURE_CLIENT_SECRET')
+        key_vault_name = os.environ.get('KEY_VAULT_NAME')
+        secret_name = os.environ.get('SECRET_NAME', 'API-Key')
+        
+        # Validar que las variables existen
+        if not all([tenant_id, client_id, client_secret, key_vault_name]):
+            return "Error: Faltan variables de entorno de configuración", 500
+        
+        # Usar ClientSecretCredential con variables de entorno (seguro)
+        credential = ClientSecretCredential(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            client_secret=client_secret
+        )
+        
+        # Construir URI del Key Vault
+        key_vault_uri = f"https://{key_vault_name}.vault.azure.net/"
         
         # Crear cliente de Key Vault
-        client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
+        client = SecretClient(vault_url=key_vault_uri, credential=credential)
         
         # Obtener el secreto
-        secret = client.get_secret(SECRET_NAME)
+        secret = client.get_secret(secret_name)
         secret_value = secret.value
         
         return f"¡Hola! App segura con Azure Key Vault. Secret obtenido: {secret_value[:10]}..."
     
     except Exception as e:
-        return f"Error al acceder al Key Vault: {str(e)}"
+        return f"Error al acceder al Key Vault: {str(e)}", 500
 
-# Punto de entrada para ejecutar la aplicación
 if __name__ == '__main__':
-    # Escuchar en todas las interfaces (0.0.0.0) y puerto 5000
     app.run(host='0.0.0.0', port=5000)
