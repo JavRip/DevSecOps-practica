@@ -52,7 +52,7 @@ jobs:
           format: 'json'
           output: '${{ runner.temp }}/trivy-results.json'
           severity: 'CRITICAL,HIGH'
-          exit-code: '1'  # Fail if vulnerabilities found
+          exit-code: '1' 
     
       - name: Upload Trivy results
         uses: actions/upload-artifact@v6
@@ -94,10 +94,10 @@ jobs:
           
           # Check if Key Vault access was successful
           if echo "$response" | grep -q "obtenido:"; then
-            echo "✅ SUCCESS: Application successfully accessed Key Vault"
-            echo "✅ Test PASSED: Application can access Key Vault secrets"
+            echo "SUCCESS: Application successfully accessed Key Vault"
+            echo "Test PASSED: Application can access Key Vault secrets"
           else
-            echo "❌ FAILED: Could not confirm Key Vault access"
+            echo "FAILED: Could not confirm Key Vault access"
             docker logs test-app
             exit 1
           fi
